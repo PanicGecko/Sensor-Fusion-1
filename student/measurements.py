@@ -54,11 +54,11 @@ class Sensor:
         visible = False
         
         if pos_sens[0] > 0:
-            alpha = np.arctan(pos_sens[1] / pos_sens[0])
+            alpha = np.arctan2(pos_sens[1] , pos_sens[0])
             
             if alpha > self.fov[0] and alpha < self.fov[1]:
                 visible = True
-        return True
+        return visible
         
         ############
         # END student code
@@ -81,14 +81,17 @@ class Sensor:
             # - return h(x)
             ############
 
-            H = np.zeros((2, 1))
-            if x[0] == 0:
-                raise NameError("Cannot be ZERO!")
-            else:
-                hx[0, 0] = self.c_i - self.f_i * x[1] / x[0]
-                hx[1, 0] = self.c_j - self.f_j * x[2] / x[0]
-                return hx
+            pos_veh = np.ones((4, 1))
+            pos_veh[0:3] = x[0:3]
+            pos_sens = self.veh_to_sens * pos_veh
 
+            if pos_sens[0] > 0.00001:
+                cam_cood = np.zeros((2, 1))
+                cam_cood[0] = self.c_i - (self.f_i * pos_sens[1] / pos_sens[0])
+                cam_cood[1] = self.c_j - (self.f_j * pos_sens[2] / pos_sens[0])
+                return cam_cood
+            else:
+                raise ValueError("Divison by Zero")
         
             ############
             # END student code
@@ -172,13 +175,13 @@ class Measurement:
             # TODO Step 4: initialize camera measurement including z, R, and sensor 
             ############
 
-            self.z = np.matrix([[z[0]],[z[1]]])
+            self.z = np.zeros((sensor.dim_meas, 1))
+            self.z[0][0] = z[0]
+            self.z[1][0] = z[1]
             self.sensor = sensor
-            
-            self.R = np.matrix([[params.sigma_cam_i**2, 0],
-                               [0, params.sigma_cam_j**2]])
-
-           
+            sigma_cam_i = params.sigma_cam_i
+            sigma_cam_j = params.sigma_cam_j
+            self.R = np.matrix([[sigma_cam_i**2, 0], [0, sigma_cam_j**2]])
         
             ############
             # END student code
